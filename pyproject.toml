@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cap-validator"
+version = "0.1.0"
+authors = [
+  { name="Anindita Bose", email="anindita.bose@g.bracu.ac.bd" },
+]
+description = "A standalone Python library to validate CAP (Common Alerting Protocol) files."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Communications",
+    "Topic :: Security",
+]
+dependencies = [
+    "pydantic>=1.9",
+    "xmltodict>=0.13"
+]
+
+[project.urls]
+Homepage = "https://github.com/your-username/cap-validator-project"
+Issues = "https://github.com/your-username/cap-validator-project/issues"

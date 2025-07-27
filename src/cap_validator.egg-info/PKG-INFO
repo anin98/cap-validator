@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: cap-validator
+Version: 0.1.0
+Summary: A standalone Python library to validate CAP (Common Alerting Protocol) files.
+Author-email: Your Name <your@email.com>
+Project-URL: Homepage, https://github.com/your-username/cap-validator-project
+Project-URL: Issues, https://github.com/your-username/cap-validator-project/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Communications
+Classifier: Topic :: Security
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=1.9
+Requires-Dist: xmltodict>=0.13
