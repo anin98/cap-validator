@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>urn:oid:2.49.0.1.999.20250727111117.41e9da83</identifier>
+  <sender>anin@gmail.com</sender>
+  <sent>2025-07-27T11:11:17+00:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <scope>Public</scope>
+  <info>
+    <language>en-US</language>
+    <category>Met</category>
+    <event>dnnd</event>
+    <responseType>Shelter</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Extreme</severity>
+    <certainty>Observed</certainty>
+    <effective>2025-07-26T22:00:00+00:00</effective>
+    <expires>2025-07-27T18:00:00+00:00</expires>
+    <senderName>Anindita</senderName>
+    <headline>nxndnd</headline>
+    <description>dmmd</description>
+    <instruction>ndndn</instruction>
+    <area>
+      <areaDesc>dhhdhd</areaDesc>
+      <polygon>-8.673823116728236,125.65803489215418 -8.832336472275461,125.49502437380616 -8.866109242370433,125.78949498759621 -8.673823116728236,125.65803489215418</polygon>
+      <geocode>
+        <valueName>GEOCODE</valueName>
+        <value>TL-DI</value>
+      </geocode>
+    </area>
+    <area>
+      <areaDesc>jsjdjdej</areaDesc>
+      <polygon>-8.632124210315945,125.70577849994088 -8.906341691892207,125.53825477554828 -8.958057978981504,125.85236175878433 -8.632124210315945,125.70577849994088</polygon>
+      <geocode>
+        <valueName>GEOCODE</valueName>
+        <value>TL-DI</value>
+      </geocode>
+    </area>
+  </info>
+</alert>

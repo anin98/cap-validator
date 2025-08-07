@@ -1,0 +1,23 @@
+{
+  "compliant": true,
+  "oasis_version": "1.2",
+  "validation_timestamp": "2025-08-07T08:37:29-00:00",
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "xsd_validation": false,
+    "datetime_format": true,
+    "element_sequence": true,
+    "content_validation": true,
+    "geographic_validation": true,
+    "namespace_validation": true
+  },
+  "alert_info": {
+    "identifier": "asss",
+    "sender": "meteorology@dmd.gov.bd",
+    "sent": "2025-07-29T13:30:00+06:00",
+    "status": "Actual",
+    "msgType": "Alert",
+    "scope": "Public"
+  }
+}

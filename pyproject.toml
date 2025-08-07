@@ -1,28 +1,282 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cap-validator"
-version = "0.1.0"
-authors = [
-  { name="Anindita Bose", email="anindita.bose@g.bracu.ac.bd" },
-]
-description = "A standalone Python library to validate CAP (Common Alerting Protocol) files."
+name = "pycap-validator"
+version = "1.0.0"
+description = "A comprehensive Python library for validating and generating OASIS Common Alerting Protocol (CAP) 1.2 compliant XML documents"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+maintainers = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+keywords = [
+    "cap",
+    "common-alerting-protocol", 
+    "oasis",
+    "emergency-management",
+    "xml-validation",
+    "alert-system",
+    "disaster-management",
+    "public-safety",
+    "warning-system"
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8", 
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Communications",
-    "Topic :: Security",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+    "Topic :: Text Processing :: Markup :: XML",
+    "Typing :: Typed"
 ]
 dependencies = [
-    "pydantic>=1.9",
-    "xmltodict>=0.13"
+    "pydantic>=1.8.0,<3.0.0",
+    "python-dateutil>=2.8.0",
+    "requests>=2.25.0"
+]
+
+[project.optional-dependencies]
+xsd = [
+    "xmlschema>=1.10.0,<3.0.0"
+]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.10.0",
+    "pytest-mock>=3.6.0",
+    "black>=21.0.0",
+    "isort>=5.9.0",
+    "flake8>=3.9.0",
+    "mypy>=0.910",
+    "pre-commit>=2.15.0",
+    "tox>=3.24.0"
+]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.0",
+    "myst-parser>=0.15.0"
+]
+test = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.10.0",
+    "pytest-mock>=3.6.0",
+    "xmlschema>=1.10.0,<3.0.0"
+]
+all = [
+    "cap-validator[xsd,dev,docs,test]"
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-username/cap-validator-project"
-Issues = "https://github.com/your-username/cap-validator-project/issues"
+Homepage = "https://github.com/yourusername/cap-validator"
+Documentation = "https://cap-validator.readthedocs.io/"
+Repository = "https://github.com/yourusername/cap-validator.git"
+"Bug Tracker" = "https://github.com/yourusername/cap-validator/issues"
+Changelog = "https://github.com/yourusername/cap-validator/blob/main/CHANGELOG.md"
+
+[project.scripts]
+cap-validate = "cap_validator.cli:main"
+cap-generate = "cap_validator.cli:generate_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["cap_validator*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+cap_validator = [
+    "schemas/*.xsd",
+    "templates/*.xml",
+    "py.typed"
+]
+
+# Black code formatting
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+# isort import sorting
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+src_paths = ["src", "tests"]
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=cap_validator",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml"
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "xsd: marks tests that require XSD validation"
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+show_missing = true
+skip_covered = false
+
+# MyPy type checking
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "xmlschema.*",
+    "requests.*"
+]
+ignore_missing_imports = true
+
+# Flake8 linting (via setup.cfg or pyproject.toml plugin)
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by black)
+    "W503",  # line break before binary operator
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".tox"
+]
+per-file-ignores = [
+    "__init__.py:F401",  # imported but unused
+    "test_*.py:S101"     # use of assert
+]
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "test_*"]
+skips = ["B101"]  # Skip assert_used test
+
+# Tox configuration for testing multiple Python versions
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py37,py38,py39,py310,py311,py312,lint,type-check
+isolated_build = true
+
+[testenv]
+deps = 
+    pytest
+    pytest-cov
+    xmlschema
+commands = pytest {posargs}
+
+[testenv:lint]
+deps = 
+    black
+    isort
+    flake8
+commands = 
+    black --check src tests
+    isort --check-only src tests  
+    flake8 src tests
+
+[testenv:type-check]
+deps = 
+    mypy
+    types-requests
+    types-python-dateutil
+commands = mypy src
+
+[testenv:docs]
+deps = 
+    sphinx
+    sphinx-rtd-theme
+    myst-parser
+commands = sphinx-build -W -b html docs docs/_build/html
+"""

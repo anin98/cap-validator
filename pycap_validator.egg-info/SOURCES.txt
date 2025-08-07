@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+pycap_validator.egg-info/PKG-INFO
+pycap_validator.egg-info/SOURCES.txt
+pycap_validator.egg-info/dependency_links.txt
+pycap_validator.egg-info/entry_points.txt
+pycap_validator.egg-info/requires.txt
+pycap_validator.egg-info/top_level.txt

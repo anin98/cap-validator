@@ -1,0 +1,48 @@
+Metadata-Version: 2.4
+Name: pycap-validator
+Version: 0.2.0
+Summary: A comprehensive Python library to validate and generate CAP (Common Alerting Protocol) files following OASIS CAP 1.2 specification.
+Author-email: Anindita Bose <anindita.bose@g.bracu.ac.bd>
+Project-URL: Homepage, https://github.com/anin98/cap-validator
+Project-URL: Issues, https://github.com/anin98/cap-validator/issues
+Project-URL: Documentation, https://github.com/anin98/cap-validator#readme
+Project-URL: Repository, https://github.com/anin98/cap-validator
+Project-URL: Changelog, https://github.com/anin98/cap-validator/blob/main/CHANGELOG.md
+Keywords: CAP,Common Alerting Protocol,emergency,alerts,validation,XML,OASIS,WMO,AlertWise,emergency management,disaster response
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Communications
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Markup :: XML
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Science/Research
+Classifier: Development Status :: 4 - Beta
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic<3.0,>=1.9
+Requires-Dist: xmltodict>=0.13
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.0; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.8; extra == "dev"
+Requires-Dist: mypy>=0.910; extra == "dev"
+Requires-Dist: isort>=5.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=6.0; extra == "test"
+Requires-Dist: pytest-cov>=2.0; extra == "test"
+Provides-Extra: docs
+Requires-Dist: mkdocs>=1.4; extra == "docs"
+Requires-Dist: mkdocs-material>=8.0; extra == "docs"
+Requires-Dist: mkdocstrings[python]>=0.19; extra == "docs"
+Dynamic: license-file

@@ -1,5 +1,5 @@
 Metadata-Version: 2.4
-Name: cap-validator
+Name: pycap-validator
 Version: 0.1.1
 Summary: A standalone Python library to validate CAP (Common Alerting Protocol) files.
 Author-email: Anindita Bose <anindita.bose@g.bracu.ac.bd>

@@ -1,107 +1,84 @@
 #!/usr/bin/env python3
 """
-Debug script to check package installation and imports.
+Debug script to identify and fix import issues
 """
-
 import sys
-import os
 from pathlib import Path
 
-print("🔍 Debug Information")
-print("=" * 50)
-
-# Check Python path
-print("📍 Python executable:", sys.executable)
-print("📁 Current directory:", os.getcwd())
-print("🐍 Python version:", sys.version)
-
-# Check if we're in a virtual environment
-if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
-    print("🌐 Virtual environment: Active")
-else:
-    print("🌐 Virtual environment: Not detected")
-
-print("\n📦 Python Path:")
-for i, path in enumerate(sys.path):
-    print(f"   {i}: {path}")
-
-# Check current directory structure
-print(f"\n📁 Current Directory Contents:")
-current_dir = Path(".")
-for item in sorted(current_dir.iterdir()):
-    if item.is_dir():
-        print(f"   📁 {item.name}/")
-    else:
-        print(f"   📄 {item.name}")
-
-# Check if src directory exists
-src_dir = Path("src")
-if src_dir.exists():
-    print(f"\n📁 src/ Directory Contents:")
-    for item in sorted(src_dir.iterdir()):
-        if item.is_dir():
-            print(f"   📁 {item.name}/")
-        else:
-            print(f"   📄 {item.name}")
+def main():
+    print("🔍 CAP Validator Import Debugger")
+    print("=" * 50)
     
-    # Check cap_validator directory
-    cap_validator_dir = src_dir / "cap_validator"
-    if cap_validator_dir.exists():
-        print(f"\n📁 src/cap_validator/ Directory Contents:")
-        for item in sorted(cap_validator_dir.iterdir()):
-            if item.is_dir():
-                print(f"   📁 {item.name}/")
-            else:
-                print(f"   📄 {item.name}")
-
-# Try to import the package step by step
-print(f"\n🧪 Import Testing:")
-
-try:
-    import cap_validator
-    print("✅ cap_validator imported successfully")
-    print(f"   📍 Package location: {cap_validator.__file__}")
+    # Check current working directory
+    cwd = Path.cwd()
+    print(f"Current working directory: {cwd}")
     
-    # Try importing specific functions
+    # Check for src directory
+    src_path = cwd / "src"
+    print(f"src directory exists: {src_path.exists()}")
+    
+    # Check for cap_validator directory
+    cap_validator_path = src_path / "cap_validator"
+    print(f"cap_validator directory exists: {cap_validator_path.exists()}")
+    
+    # Check for __init__.py
+    init_file = cap_validator_path / "__init__.py"
+    print(f"__init__.py exists: {init_file.exists()}")
+    
+    # List all files in cap_validator directory
+    if cap_validator_path.exists():
+        print(f"\nFiles in cap_validator directory:")
+        for file in cap_validator_path.iterdir():
+            if file.is_file():
+                print(f"  - {file.name}")
+    
+    # Add src to Python path
+    if src_path.exists():
+        sys.path.insert(0, str(src_path))
+        print(f"\n✅ Added {src_path} to Python path")
+    
+    # Try importing
+    print(f"\n🧪 Testing imports...")
+    
+    # Test 1: Try importing the module
     try:
-        from cap_validator import validate_cap_file
-        print("✅ validate_cap_file imported successfully")
+        import cap_validator
+        print("✅ Successfully imported cap_validator module")
+        print(f"   Module file: {cap_validator.__file__}")
     except ImportError as e:
-        print(f"❌ validate_cap_file import failed: {e}")
+        print(f"❌ Failed to import cap_validator module: {e}")
+        return False
     
+    # Test 2: Try importing version
     try:
-        from cap_validator import validate_cap_xml
-        print("✅ validate_cap_xml imported successfully")
+        from cap_validator import __version__
+        print(f"✅ Successfully imported version: {__version__}")
     except ImportError as e:
-        print(f"❌ validate_cap_xml import failed: {e}")
-        
+        print(f"❌ Failed to import __version__: {e}")
+    
+    # Test 3: Try importing main functions
+    try:
+        from cap_validator import validate_cap_dict, generate_cap_xml_from_dict
+        print("✅ Successfully imported main functions")
+    except ImportError as e:
+        print(f"❌ Failed to import main functions: {e}")
+        return False
+    
+    # Test 4: Try importing exceptions
     try:
         from cap_validator import CAPValidationError
-        print("✅ CAPValidationError imported successfully")
+        print("✅ Successfully imported exceptions")
     except ImportError as e:
-        print(f"❌ CAPValidationError import failed: {e}")
-
-except ImportError as e:
-    print(f"❌ cap_validator import failed: {e}")
+        print(f"❌ Failed to import exceptions: {e}")
     
-    # Check if there are any installed packages with similar names
-    try:
-        import pkg_resources
-        installed_packages = [d.project_name for d in pkg_resources.working_set]
-        cap_packages = [pkg for pkg in installed_packages if 'cap' in pkg.lower()]
-        if cap_packages:
-            print(f"🔍 Found CAP-related packages: {cap_packages}")
-    except:
-        pass
+    print(f"\n🎉 All imports successful! You can now run the main script.")
+    return True
 
-# Check if we can find the modules manually
-print(f"\n🔍 Manual Module Check:")
-try:
-    sys.path.insert(0, str(Path("src")))
-    import cap_validator
-    print("✅ Manual import from src/ successful")
-    print(f"   📍 Module location: {cap_validator.__file__}")
-except ImportError as e:
-    print(f"❌ Manual import failed: {e}")
-
-print(f"\n✨ Debug completed!")
+if __name__ == "__main__":
+    success = main()
+    if not success:
+        print(f"\n🔧 Suggested fixes:")
+        print(f"1. Make sure __init__.py exists in src/cap_validator/")
+        print(f"2. Clear Python cache: rm -rf src/cap_validator/__pycache__/")
+        print(f"3. Check file permissions")
+        sys.exit(1)

@@ -1,24 +1,20 @@
-"""Pydantic models for CAP (Common Alerting Protocol) validation."""
+# src/cap_validator/models.py
+
+"""
+Enhanced Pydantic models for OASIS CAP 1.2 compliance.
+
+This module provides comprehensive Pydantic models that enforce all OASIS CAP 1.2
+requirements, including field validation, format checking, and business rules.
+"""
 
 from datetime import datetime, timezone
-from typing import List, Literal, Optional, Any, Dict, Union
-from pydantic import BaseModel, field_validator, Field, model_validator
-from email.utils import parseaddr
+from typing import List, Optional, Union, Literal
+from pydantic import BaseModel, Field, field_validator, model_validator
 import re
 
-from .exceptions import CAPValidationError, CAPDateTimeError, CAPGeographicError
-from .utils import (
-    parse_datetime, 
-    validate_coordinates, 
-    validate_polygon, 
-    validate_circle,
-    validate_email_format,
-    validate_uri_format,
-    sanitize_identifier,
-    normalize_whitespace
-)
+from .exceptions import CAPValidationError, CAPDateTimeError, CAPContentError, CAPGeographicError
 
-# CAP 1.2 Standard Literal Types
+# Type literals for better IDE support and validation
 Status = Literal["Actual", "Exercise", "System", "Test", "Draft"]
 MsgType = Literal["Alert", "Update", "Cancel", "Ack", "Error"]
 Scope = Literal["Public", "Restricted", "Private"]
@@ -28,395 +24,586 @@ Urgency = Literal["Immediate", "Expected", "Future", "Past", "Unknown"]
 Severity = Literal["Extreme", "Severe", "Moderate", "Minor", "Unknown"]
 Certainty = Literal["Observed", "Likely", "Possible", "Unlikely", "Unknown"]
 
+# OASIS CAP 1.2 datetime pattern
+CAP_DATETIME_PATTERN = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$')
+EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+URI_PATTERN = re.compile(r'^https?://[^\s/$.?#].[^\s]*$|^[a-zA-Z][a-zA-Z0-9+.-]*:')
+
 
 class Parameter(BaseModel):
-    """CAP Parameter element for key-value pairs."""
-    valueName: str
-    value: str
-
-    @field_validator('valueName', 'value')
+    """
+    Model for parameter elements (name/value pairs).
+    """
+    valueName: str = Field(..., min_length=1, description="Parameter name")
+    value: str = Field(..., description="Parameter value")
+    
+    @field_validator('valueName')
     @classmethod
-    def normalize_parameter_text(cls, v):
-        """Normalize text in parameters."""
-        return normalize_whitespace(v) if v else v
+    def validate_value_name(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Parameter valueName cannot be empty", element='parameter.valueName')
+        # OASIS recommendation: acronyms should be uppercase without periods
+        return v.strip()
+    
+    @field_validator('value')
+    @classmethod 
+    def validate_value(cls, v):
+        if v is None:
+            raise CAPContentError("Parameter value cannot be None", element='parameter.value')
+        return str(v).strip()
 
 
 class Geocode(BaseModel):
-    """CAP Geocode element for geographic codes."""
-    valueName: str
-    value: str
-
-    @field_validator('valueName', 'value')
+    """
+    Model for geocode elements (geographic code name/value pairs).
+    """
+    valueName: str = Field(..., min_length=1, description="Geographic code name")
+    value: str = Field(..., min_length=1, description="Geographic code value")
+    
+    @field_validator('valueName')
     @classmethod
-    def normalize_geocode_text(cls, v):
-        """Normalize text in geocodes."""
-        return normalize_whitespace(v) if v else v
+    def validate_value_name(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Geocode valueName cannot be empty", element='geocode.valueName')
+        # OASIS recommendation: acronyms should be uppercase without periods
+        return v.strip()
+    
+    @field_validator('value')
+    @classmethod
+    def validate_value(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Geocode value cannot be empty", element='geocode.value')
+        return v.strip()
 
 
 class Resource(BaseModel):
-    """CAP Resource element for embedded or linked resources."""
-    resourceDesc: str
-    mimeType: Optional[str] = None
-    size: Optional[int] = None
-    uri: Optional[str] = None
-    derefUri: Optional[str] = None
-    digest: Optional[str] = None
+    """
+    Model for resource elements containing supplemental information.
+    """
+    resourceDesc: str = Field(..., min_length=1, description="Resource description")
+    mimeType: Optional[str] = Field(None, description="MIME content type")
+    size: Optional[int] = Field(None, ge=0, description="Resource size in bytes")
+    uri: Optional[str] = Field(None, description="Resource URI")
+    derefUri: Optional[str] = Field(None, description="Base64 encoded resource content")
+    digest: Optional[str] = Field(None, description="SHA-1 digest of resource")
     
-    @field_validator('size')
-    @classmethod
-    def size_must_be_positive(cls, v):
-        """Validate resource size is positive."""
-        if v is not None and v <= 0:
-            raise ValueError('Resource size must be positive')
-        return v
-    
-    @field_validator('uri', 'derefUri')
-    @classmethod
-    def validate_uri(cls, v):
-        """Validate URI format."""
-        if v is not None:
-            if not validate_uri_format(v):
-                raise ValueError('URI must be a valid HTTP(S) URL')
-        return v
-
     @field_validator('resourceDesc')
     @classmethod
-    def normalize_resource_desc(cls, v):
-        """Normalize resource description."""
-        return normalize_whitespace(v) if v else v
+    def validate_resource_desc(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Resource description cannot be empty", element='resourceDesc')
+        return v.strip()
+    
+    @field_validator('mimeType')
+    @classmethod
+    def validate_mime_type(cls, v):
+        if v is not None:
+            if not v or not v.strip():
+                raise CAPContentError("MIME type cannot be empty if provided", element='mimeType')
+            # Basic MIME type validation
+            mime_pattern = r'^[a-zA-Z][a-zA-Z0-9][a-zA-Z0-9\-\.]*/[a-zA-Z0-9][a-zA-Z0-9\-\.]*$'
+            if not re.match(mime_pattern, v.strip()):
+                raise CAPContentError(f"Invalid MIME type format: {v}", element='mimeType')
+        return v.strip() if v else None
+    
+    @field_validator('uri')
+    @classmethod
+    def validate_uri(cls, v):
+        if v is not None:
+            if not v or not v.strip():
+                raise CAPContentError("URI cannot be empty if provided", element='uri')
+            # Basic URI validation
+            from urllib.parse import urlparse
+            try:
+                result = urlparse(v.strip())
+                if not (result.scheme and result.netloc):
+                    raise CAPContentError(f"Invalid URI format: {v}", element='uri')
+            except Exception:
+                raise CAPContentError(f"Invalid URI format: {v}", element='uri')
+        return v.strip() if v else None
+    
+    @field_validator('digest')
+    @classmethod
+    def validate_digest(cls, v):
+        if v is not None:
+            if not v or not v.strip():
+                raise CAPContentError("Digest cannot be empty if provided", element='digest')
+            # SHA-1 digest should be 40 hex characters
+            if not re.match(r'^[a-fA-F0-9]{40}$', v.strip()):
+                raise CAPContentError(
+                    f"Digest must be a 40-character SHA-1 hash: {v}", 
+                    element='digest'
+                )
+        return v.strip() if v else None
 
 
 class Area(BaseModel):
-    """CAP Area element with comprehensive geographic validation."""
-    areaDesc: str
-    polygon: Optional[List[str]] = None
-    circle: Optional[List[str]] = None
-    geocode: Optional[List[Geocode]] = None
-    altitude: Optional[float] = None
-    ceiling: Optional[float] = None
+    """
+    Model for area elements describing affected geographic areas.
+    """
+    areaDesc: str = Field(..., min_length=1, description="Area description")
+    polygon: Optional[List[str]] = Field(None, description="Polygon coordinates")
+    circle: Optional[List[str]] = Field(None, description="Circle coordinates")
+    geocode: Optional[List[Geocode]] = Field(None, description="Geographic codes")
+    altitude: Optional[float] = Field(None, description="Altitude in feet above sea level")
+    ceiling: Optional[float] = Field(None, description="Ceiling in feet above sea level")
     
     @field_validator('areaDesc')
     @classmethod
-    def normalize_area_desc(cls, v):
-        """Normalize area description."""
-        return normalize_whitespace(v) if v else v
-    
-    @field_validator('polygon', mode='before')
-    @classmethod
-    def normalize_polygon(cls, v):
-        """Normalize polygon to list format."""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return [v]
-        return v
-    
-    @field_validator('circle', mode='before')
-    @classmethod
-    def normalize_circle(cls, v):
-        """Normalize circle to list format."""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return [v]
-        return v
+    def validate_area_desc(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Area description cannot be empty", element='areaDesc')
+        return v.strip()
     
     @field_validator('polygon')
     @classmethod
-    def validate_polygon_coordinates(cls, v):
-        """Validate polygon coordinate strings."""
-        if v:
-            for polygon_str in v:
-                if not validate_polygon(polygon_str):
-                    raise CAPGeographicError(f"Invalid polygon coordinates: {polygon_str}")
+    def validate_polygon(cls, v):
+        if v is not None:
+            for i, polygon in enumerate(v):
+                if not polygon or not polygon.strip():
+                    raise CAPGeographicError(f"Polygon {i} cannot be empty", geographic_element='polygon')
+                cls._validate_polygon_format(polygon.strip(), i)
         return v
     
     @field_validator('circle')
     @classmethod
-    def validate_circle_coordinates(cls, v):
-        """Validate circle coordinate strings."""
-        if v:
-            for circle_str in v:
-                if not validate_circle(circle_str):
-                    raise CAPGeographicError(f"Invalid circle coordinates: {circle_str}")
-        return v
-    
-    @field_validator('altitude', 'ceiling')
-    @classmethod
-    def validate_elevation(cls, v):
-        """Validate elevation values are reasonable."""
-        if v is not None and v < -1000:  # Below Dead Sea level seems unreasonable
-            raise ValueError('Elevation value seems unreasonably low')
+    def validate_circle(cls, v):
+        if v is not None:
+            for i, circle in enumerate(v):
+                if not circle or not circle.strip():
+                    raise CAPGeographicError(f"Circle {i} cannot be empty", geographic_element='circle')
+                cls._validate_circle_format(circle.strip(), i)
         return v
     
     @model_validator(mode='after')
-    def area_must_have_geographic_info(self):
-        """Validate that area has some geographic information."""
-        polygon = self.polygon
-        circle = self.circle
-        geocode = self.geocode
+    def validate_altitude_ceiling(self):
+        if self.ceiling is not None and self.altitude is None:
+            raise CAPContentError(
+                "Ceiling requires altitude to be specified",
+                element='ceiling',
+                constraint_type='conditional'
+            )
         
-        if not any([polygon, circle, geocode]):
-            # This is just a warning in some implementations
-            # Could be made stricter based on requirements
-            pass
-            
+        if self.altitude is not None and self.ceiling is not None:
+            if self.ceiling <= self.altitude:
+                raise CAPGeographicError(
+                    f"Ceiling ({self.ceiling}) must be greater than altitude ({self.altitude})",
+                    geographic_element='ceiling'
+                )
+        
         return self
+    
+    @staticmethod
+    def _validate_polygon_format(polygon: str, index: int):
+        """Validate polygon coordinate format."""
+        coords = polygon.split()
+        if len(coords) < 4:
+            raise CAPGeographicError(
+                f"Polygon {index} must have at least 4 coordinate pairs, got {len(coords)}",
+                coordinates=polygon,
+                geographic_element='polygon'
+            )
+        
+        # Parse and validate coordinates
+        parsed_coords = []
+        for coord in coords:
+            if ',' not in coord:
+                raise CAPGeographicError(
+                    f"Invalid coordinate format in polygon {index}: {coord}. Expected 'latitude,longitude'",
+                    coordinates=coord,
+                    geographic_element='polygon'
+                )
+            
+            try:
+                lat_str, lon_str = coord.split(',', 1)
+                lat = float(lat_str)
+                lon = float(lon_str)
+                
+                # Validate WGS 84 ranges
+                if not (-90 <= lat <= 90):
+                    raise CAPGeographicError(
+                        f"Latitude must be between -90 and 90: {lat}",
+                        coordinates=coord,
+                        geographic_element='polygon'
+                    )
+                
+                if not (-180 <= lon <= 180):
+                    raise CAPGeographicError(
+                        f"Longitude must be between -180 and 180: {lon}",
+                        coordinates=coord,
+                        geographic_element='polygon'
+                    )
+                
+                parsed_coords.append((lat, lon))
+                
+            except ValueError:
+                raise CAPGeographicError(
+                    f"Invalid coordinate values in polygon {index}: {coord}",
+                    coordinates=coord,
+                    geographic_element='polygon'
+                )
+        
+        # Check if polygon is closed
+        if parsed_coords[0] != parsed_coords[-1]:
+            raise CAPGeographicError(
+                f"Polygon {index} must be closed (first and last points must match)",
+                coordinates=polygon,
+                geographic_element='polygon'
+            )
+    
+    @staticmethod
+    def _validate_circle_format(circle: str, index: int):
+        """Validate circle coordinate format."""
+        parts = circle.split()
+        if len(parts) != 2:
+            raise CAPGeographicError(
+                f"Circle {index} format must be 'latitude,longitude radius_km': {circle}",
+                coordinates=circle,
+                geographic_element='circle'
+            )
+        
+        coord_part, radius_part = parts
+        
+        # Validate coordinate
+        if ',' not in coord_part:
+            raise CAPGeographicError(
+                f"Invalid coordinate format in circle {index}: {coord_part}. Expected 'latitude,longitude'",
+                coordinates=circle,
+                geographic_element='circle'
+            )
+        
+        try:
+            lat_str, lon_str = coord_part.split(',', 1)
+            lat = float(lat_str)
+            lon = float(lon_str)
+            
+            # Validate WGS 84 ranges
+            if not (-90 <= lat <= 90):
+                raise CAPGeographicError(
+                    f"Latitude must be between -90 and 90: {lat}",
+                    coordinates=circle,
+                    geographic_element='circle'
+                )
+            
+            if not (-180 <= lon <= 180):
+                raise CAPGeographicError(
+                    f"Longitude must be between -180 and 180: {lon}",
+                    coordinates=circle,
+                    geographic_element='circle'
+                )
+            
+            # Validate radius
+            radius = float(radius_part)
+            if radius <= 0:
+                raise CAPGeographicError(
+                    f"Circle {index} radius must be positive: {radius}",
+                    coordinates=circle,
+                    geographic_element='circle'
+                )
+                
+        except ValueError:
+            raise CAPGeographicError(
+                f"Invalid coordinate or radius values in circle {index}: {circle}",
+                coordinates=circle,
+                geographic_element='circle'
+            )
 
 
 class Info(BaseModel):
-    """CAP Info element with comprehensive validation."""
-    language: Optional[str] = Field("en-US")
-    category: List[Category]
-    event: str
-    responseType: Optional[List[ResponseType]] = None
-    urgency: Urgency
-    severity: Severity
-    certainty: Certainty
-    audience: Optional[str] = None
-    eventCode: Optional[List[Parameter]] = None
-    effective: Optional[datetime] = None
-    onset: Optional[datetime] = None
-    expires: Optional[datetime] = None
-    senderName: str
-    headline: Optional[str] = None
-    description: Optional[str] = None
-    instruction: Optional[str] = None
-    web: Optional[str] = None
-    contact: Optional[str] = None
-    parameter: Optional[List[Parameter]] = None
-    resource: Optional[List[Resource]] = None
-    area: Optional[List[Area]] = None
+    """
+    Model for info elements containing alert information.
+    """
+    language: Optional[str] = Field("en-US", description="Language code (RFC 3066)")
+    category: List[Category] = Field(..., min_length=1, description="Event categories")
+    event: str = Field(..., min_length=1, description="Event description")
+    responseType: Optional[List[ResponseType]] = Field(None, description="Recommended response types")
+    urgency: Urgency = Field(..., description="Urgency level")
+    severity: Severity = Field(..., description="Severity level")
+    certainty: Certainty = Field(..., description="Certainty level")
+    audience: Optional[str] = Field(None, description="Intended audience")
+    eventCode: Optional[List[Parameter]] = Field(None, description="Event codes")
+    effective: Optional[datetime] = Field(None, description="Effective time")
+    onset: Optional[datetime] = Field(None, description="Event onset time")
+    expires: Optional[datetime] = Field(None, description="Expiration time")
+    senderName: Optional[str] = Field(None, description="Sender name")
+    headline: Optional[str] = Field(None, max_length=160, description="Alert headline")
+    description: Optional[str] = Field(None, description="Event description")
+    instruction: Optional[str] = Field(None, description="Response instructions")
+    web: Optional[str] = Field(None, description="Reference URI")
+    contact: Optional[str] = Field(None, description="Contact information")
+    parameter: Optional[List[Parameter]] = Field(None, description="Additional parameters")
+    resource: Optional[List[Resource]] = Field(None, description="Associated resources")
+    area: Optional[List[Area]] = Field(None, description="Affected areas")
     
     @field_validator('language')
     @classmethod
-    def validate_language_code(cls, v):
-        """Validate RFC 3066 language code."""
-        if v and not re.match(r'^[a-z]{2}(-[A-Z]{2})?$', v):
-            raise ValueError('Language must be a valid RFC 3066 code (e.g., en-US)')
+    def validate_language(cls, v):
+        if v is not None:
+            # RFC 3066 language code validation - Fixed regex pattern
+            lang_pattern = r'^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$'
+            if not re.match(lang_pattern, v):
+                raise CAPContentError(
+                    f"Invalid language code: {v}. Expected RFC 3066 format",
+                    element='language'
+                )
+        return v or "en-US"
+    
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v):
+        if not v or len(v) == 0:
+            raise CAPContentError("At least one category is required", element='category')
         return v
     
-    @field_validator('category', mode='before')
+    @field_validator('event')
     @classmethod
-    def ensure_category_is_list(cls, v):
-        """CAP allows category to be a single item or a list. Normalize to a list."""
-        if not isinstance(v, list):
-            return [v]
-        return v
+    def validate_event(cls, v):
+        if not v or not v.strip():
+            raise CAPContentError("Event description cannot be empty", element='event')
+        return v.strip()
     
-    @field_validator('responseType', mode='before')
+    @field_validator('headline')
     @classmethod
-    def normalize_response_type(cls, v):
-        """Normalize responseType to list format."""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return [v]
-        return v
-    
-    @field_validator('effective', 'onset', 'expires', mode='before')
-    @classmethod
-    def parse_datetime_fields(cls, v):
-        """Parse datetime strings into datetime objects."""
-        if isinstance(v, str):
-            return parse_datetime(v)
+    def validate_headline(cls, v):
+        if v is not None:
+            if len(v) > 160:
+                # OASIS recommendation, not a hard requirement
+                pass  # Could issue warning
+            return v.strip() if v.strip() else None
         return v
     
     @field_validator('web')
     @classmethod
-    def validate_web_url(cls, v):
-        """Validate web URL format."""
-        if v and not validate_uri_format(v):
-            raise ValueError('web must be a valid HTTP(S) URL')
-        return v
+    def validate_web(cls, v):
+        if v is not None:
+            if not v.strip():
+                raise CAPContentError("Web URI cannot be empty if provided", element='web')
+            # Basic URI validation
+            from urllib.parse import urlparse
+            try:
+                result = urlparse(v.strip())
+                if not (result.scheme and result.netloc):
+                    raise CAPContentError(f"Invalid URI format: {v}", element='web')
+            except Exception:
+                raise CAPContentError(f"Invalid URI format: {v}", element='web')
+        return v.strip() if v and v.strip() else None
     
-    @field_validator('contact')
+    @field_validator('effective', 'onset', 'expires')
     @classmethod
-    def validate_contact(cls, v):
-        """Validate contact information."""
-        if v:
-            # Check if it looks like an email address
-            if '@' in v:
-                name, addr = parseaddr(v)
-                if not addr or not validate_email_format(addr):
-                    raise ValueError('Invalid email format in contact')
+    def validate_datetime_fields(cls, v):
+        if v is not None:
+            # Ensure timezone info is present
+            if v.tzinfo is None:
+                v = v.replace(tzinfo=timezone.utc)
+            
+            # Validate format by converting to string and checking pattern
+            dt_str = v.isoformat(sep='T', timespec='seconds')
+            if dt_str.endswith('Z'):
+                dt_str = dt_str[:-1] + '-00:00'
+            elif dt_str.endswith('+00:00'):
+                dt_str = dt_str[:-6] + '-00:00'
+            
+            if not CAP_DATETIME_PATTERN.match(dt_str):
+                raise CAPDateTimeError(
+                    f"Invalid datetime format: {dt_str}",
+                    datetime_value=dt_str
+                )
         return v
-    
-    @field_validator('event', 'senderName', 'headline', 'description', 'instruction', 'audience')
-    @classmethod
-    def normalize_text_fields(cls, v):
-        """Normalize whitespace in text fields."""
-        return normalize_whitespace(v) if v else v
     
     @model_validator(mode='after')
-    def validate_info_consistency(self):
-        """Cross-field validation for Info element."""
-        # Expires validation
-        if self.expires is None:
-            raise ValueError('expires is required')
-            
-        # Check if expires is in the future
-        now = datetime.now(timezone.utc)
-        if self.expires <= now:
-            raise CAPDateTimeError('expires must be in the future')
-            
-        # Check against effective date
-        if self.effective and self.expires <= self.effective:
-            raise CAPDateTimeError('expires must be after effective date')
-        
-        # Onset validation
-        if self.onset and self.effective and self.onset < self.effective:
-            raise CAPDateTimeError('onset cannot be before effective date')
-        
-        urgency = self.urgency
-        severity = self.severity
-        certainty = self.certainty
-        
-        # WMO AlertWise specific validation
-        if urgency == 'Immediate' and severity in ['Minor', 'Unknown']:
-            raise CAPValidationError(
-                'Immediate urgency should not be used with Minor or Unknown severity',
-                field='urgency'
+    def validate_time_relationships(self):
+        """Validate logical relationships between time fields."""
+        # Effective should be before expires
+        if self.effective and self.expires and self.effective >= self.expires:
+            raise CAPDateTimeError(
+                "Effective time must be before expires time",
+                datetime_value=f"effective={self.effective}, expires={self.expires}"
             )
-            
-        if certainty == 'Unlikely' and urgency == 'Immediate':
-            raise CAPValidationError(
-                'Unlikely certainty conflicts with Immediate urgency',
-                field='certainty'
+        
+        # Onset should be before expires
+        if self.onset and self.expires and self.onset >= self.expires:
+            raise CAPDateTimeError(
+                "Onset time must be before expires time",
+                datetime_value=f"onset={self.onset}, expires={self.expires}"
             )
-            
+        
         return self
 
 
 class Alert(BaseModel):
-    """The root CAP Alert model with comprehensive validation."""
-    identifier: str
-    sender: str
-    sent: datetime
-    status: Status
-    msgType: MsgType
-    source: Optional[str] = None
-    scope: Scope
-    restriction: Optional[str] = None
-    addresses: Optional[str] = None
-    code: Optional[List[str]] = None
-    note: Optional[str] = None
-    references: Optional[str] = None
-    incidents: Optional[str] = None
-    info: Optional[List[Info]] = None
+    """
+    Model for the root alert element.
+    """
+    identifier: str = Field(..., min_length=1, description="Alert identifier")
+    sender: str = Field(..., min_length=1, description="Alert sender")
+    sent: datetime = Field(..., description="Time alert was sent")
+    status: Status = Field(..., description="Alert status")
+    msgType: MsgType = Field(..., description="Message type")
+    source: Optional[str] = Field(None, description="Alert source")
+    scope: Scope = Field(..., description="Alert scope")
+    restriction: Optional[str] = Field(None, description="Restriction text")
+    addresses: Optional[str] = Field(None, description="Private alert addresses")
+    code: Optional[List[str]] = Field(None, description="Special handling codes")
+    note: Optional[str] = Field(None, description="Alert note")
+    references: Optional[str] = Field(None, description="References to other alerts")
+    incidents: Optional[str] = Field(None, description="Related incidents")
+    info: Optional[List[Info]] = Field(None, description="Alert information blocks")
     
     @field_validator('identifier')
     @classmethod
     def validate_identifier(cls, v):
-        """Validate CAP identifier format."""
-        if not v or len(v.strip()) == 0:
-            raise ValueError('identifier cannot be empty')
+        if not v or not v.strip():
+            raise CAPValidationError("Alert identifier cannot be empty")
         
-        sanitized = sanitize_identifier(v)
-        if len(sanitized) > 255:
-            raise ValueError('identifier too long (max 255 characters)')
-        return sanitized
+        # Sanitize identifier (remove spaces and commas as per OASIS spec)
+        identifier = v.strip()
+        if ' ' in identifier or ',' in identifier:
+            raise CAPValidationError(
+                "Alert identifier cannot contain spaces or commas",
+                field='identifier',
+                value=v
+            )
+        
+        return identifier
     
     @field_validator('sender')
     @classmethod
     def validate_sender(cls, v):
-        """Validate sender format (should be an identifier)."""
-        if not v or len(v.strip()) == 0:
-            raise ValueError('sender cannot be empty')
+        if not v or not v.strip():
+            raise CAPValidationError("Alert sender cannot be empty")
         
-        # Basic email-like format check for sender
-        if '@' in v and not validate_email_format(v):
-            raise ValueError('sender email format invalid')
+        # OASIS recommends email format for interoperability
+        sender = v.strip()
+        if not EMAIL_PATTERN.match(sender):
+            # This is a recommendation, not a hard requirement
+            # Could issue a warning here
+            pass
         
-        return v.strip()
+        return sender
     
-    @field_validator('sent', mode='before')
+    @field_validator('sent')
     @classmethod
-    def parse_sent_datetime(cls, v):
-        """Parse sent datetime."""
-        if isinstance(v, str):
-            return parse_datetime(v)
-        return v
-    
-    @field_validator('code', mode='before')
-    @classmethod
-    def normalize_code(cls, v):
-        """Normalize code to list."""
+    def validate_sent(cls, v):
         if v is None:
-            return v
-        if isinstance(v, str):
-            return [v]
+            raise CAPValidationError("Alert sent time is required")
+        
+        # Ensure timezone info is present
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        
+        # Validate format
+        dt_str = v.isoformat(sep='T', timespec='seconds')
+        if dt_str.endswith('Z'):
+            dt_str = dt_str[:-1] + '-00:00'
+        elif dt_str.endswith('+00:00'):
+            dt_str = dt_str[:-6] + '-00:00'
+        
+        if not CAP_DATETIME_PATTERN.match(dt_str):
+            raise CAPDateTimeError(
+                f"Invalid sent datetime format: {dt_str}",
+                datetime_value=dt_str
+            )
+        
+        # Validate sent time is reasonable (not too far in future/past)
+        from datetime import timedelta
+        now = datetime.now(timezone.utc)
+        
+        if v > now + timedelta(hours=24):
+            raise CAPDateTimeError(
+                f"Alert sent time is too far in the future: {v}",
+                datetime_value=str(v)
+            )
+        
+        if v < now - timedelta(days=365*10):  # 10 years ago
+            raise CAPDateTimeError(
+                f"Alert sent time is too old: {v}",
+                datetime_value=str(v)
+            )
+        
         return v
     
     @field_validator('references')
     @classmethod
-    def validate_references_format(cls, v):
-        """Validate references format: sender,identifier,sent"""
-        if v is None:
-            return v
+    def validate_references(cls, v):
+        if v is not None:
+            if not v.strip():
+                return None
             
-        # References should be space-separated triplets
-        refs = v.strip().split()
-        for ref in refs:
-            parts = ref.split(',')
-            if len(parts) != 3:
-                raise ValueError(f'Invalid reference format: {ref} (should be sender,identifier,sent)')
-            # Validate the datetime part
-            try:
-                parse_datetime(parts[2])
-            except Exception:
-                raise ValueError(f'Invalid datetime in reference: {parts[2]}')
+            # Parse references format: "sender,identifier,sent sender,identifier,sent ..."
+            references = v.strip()
+            ref_parts = references.split()
+            
+            for ref_part in ref_parts:
+                parts = ref_part.split(',')
+                if len(parts) != 3:
+                    raise CAPContentError(
+                        f"Invalid reference format: {ref_part}. Expected 'sender,identifier,sent'",
+                        element='references'
+                    )
+                
+                sender, identifier, sent = parts
+                
+                # Validate sent datetime format
+                if not CAP_DATETIME_PATTERN.match(sent):
+                    raise CAPDateTimeError(
+                        f"Invalid datetime in references: {sent}",
+                        datetime_value=sent
+                    )
+        
         return v
     
-    @field_validator('source', 'restriction', 'addresses', 'note', 'incidents')
-    @classmethod
-    def normalize_optional_text_fields(cls, v):
-        """Normalize whitespace in optional text fields."""
-        return normalize_whitespace(v) if v else v
-    
     @model_validator(mode='after')
-    def validate_alert_consistency(self):
-        """Comprehensive cross-field validation."""
-        msg_type = self.msgType
-        references = self.references
-        info = self.info
-        status = self.status
-        scope = self.scope
-        
-        # Scope validation
-        if scope == 'Restricted' and not self.restriction:
-            raise ValueError('Restricted scope requires restriction element')
-        if scope == 'Private' and not self.addresses:
-            raise ValueError('Private scope requires addresses element')
-        
-        # Update and Cancel must have references
-        if msg_type in ['Update', 'Cancel'] and not references:
-            raise CAPValidationError(
-                f"msgType '{msg_type}' requires references element",
-                field='references',
-                code='MISSING_REFERENCES'
+    def validate_conditional_fields(self):
+        """Validate conditional field requirements."""
+        # Restricted scope requires restriction field
+        if self.scope == 'Restricted' and not self.restriction:
+            raise CAPContentError(
+                "Field 'restriction' is required when scope is 'Restricted'",
+                element='restriction',
+                constraint_type='conditional'
             )
         
-        # Alert, Update must have info blocks (Cancel typically doesn't)
-        if msg_type in ['Alert', 'Update']:
-            if not info or len(info) == 0:
-                raise CAPValidationError(
-                    f"msgType '{msg_type}' requires at least one info block",
-                    field='info',
-                    code='MISSING_INFO'
-                )
-        
-        # Exercise and Test alerts validation
-        if status in ['Exercise', 'Test']:
-            # Could add specific validation for test alerts
-            pass
-            
-        # Draft alerts should not be distributed
-        if status == 'Draft':
-            raise CAPValidationError(
-                'Draft alerts should not be validated for distribution',
-                field='status',
-                code='DRAFT_STATUS'
+        # Private scope requires addresses field
+        if self.scope == 'Private' and not self.addresses:
+            raise CAPContentError(
+                "Field 'addresses' is required when scope is 'Private'",
+                element='addresses',
+                constraint_type='conditional'
             )
-            
+        
+        # Update, Cancel, Ack, and Error message types require references
+        if self.msgType in ['Update', 'Cancel', 'Ack', 'Error'] and not self.references:
+            raise CAPContentError(
+                f"Message type '{self.msgType}' requires 'references' field",
+                element='references',
+                constraint_type='conditional'
+            )
+        
         return self
+
+    class Config:
+        # Pydantic v2 configuration
+        validate_assignment = True
+        use_enum_values = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat(sep='T', timespec='seconds')
+        }
+
+
+# Export all models and type literals
+__all__ = [
+    'Alert',
+    'Info',
+    'Area',
+    'Resource',
+    'Parameter',
+    'Geocode',
+    'Status',
+    'MsgType',
+    'Scope',
+    'Category',
+    'ResponseType',
+    'Urgency',
+    'Severity',
+    'Certainty'
+]

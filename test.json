@@ -1,0 +1,172 @@
+{
+  "identifier": "invalid identifier with spaces, commas and special chars!@#$%",
+  "sender": "not-an-email-just-text",
+  "sent": "2025-25-99T99:99:99Z",
+  "status": "WrongStatus",
+  "msgType": "InvalidType",
+  "source": "",
+  "scope": "BadScope",
+  "restriction": "This should only be present when scope is Restricted",
+  "addresses": "Should only be present when scope is Private",
+  "code": "should-be-array",
+  "note": null,
+  "references": "invalid format missing commas and proper structure",
+  "incidents": "",
+  "info": [
+    {
+      "language": "invalid-language-code-way-too-long-and-wrong-format-completely",
+      "category": [],
+      "event": "",
+      "responseType": ["InvalidResponse", "NonExistentType", "BadResponse"],
+      "urgency": "SuperUrgent",
+      "severity": "VeryVeryBad",
+      "certainty": "ProbablyMaybe",
+      "audience": "   ",
+      "eventCode": [
+        {
+          "valueName": "",
+          "value": null
+        },
+        {
+          "valueName": "   ",
+          "value": ""
+        },
+        "this should be an object with valueName and value"
+      ],
+      "effective": "2025-99-99T25:70:90+99:99",
+      "onset": "2025-08-04T10:00:00-00:00",
+      "expires": "2025-08-04T08:00:00-00:00",
+      "senderName": "",
+      "headline": "This headline is intentionally way too long and exceeds the recommended 160 character limit specified by OASIS CAP 1.2 standard which should trigger validation warnings or errors in a properly implemented validator system according to specifications",
+      "description": null,
+      "instruction": "   ",
+      "web": "definitely-not-a-valid-url-format",
+      "contact": "",
+      "parameter": [
+        {
+          "valueName": null,
+          "value": ""
+        },
+        {
+          "valueName": "EmptyValue",
+          "value": null
+        },
+        "this should be an object not a string",
+        {
+          "wrongField": "should be valueName",
+          "anotherWrongField": "should be value"
+        }
+      ],
+      "resource": [
+        {
+          "resourceDesc": "",
+          "mimeType": "invalid/mime/type/with/too/many/parts",
+          "size": -500,
+          "uri": "not-a-uri-at-all",
+          "derefUri": "should-be-base64-but-is-not",
+          "digest": "not-a-valid-40-character-sha1-hash"
+        },
+        {
+          "resourceDesc": "Valid description",
+          "mimeType": "text/",
+          "size": "should-be-number",
+          "digest": "toolong1234567890123456789012345678901234567890"
+        }
+      ],
+      "area": [
+        {
+          "areaDesc": "",
+          "polygon": [
+            "invalid-polygon-format",
+            "200.5,-300.7 100.2,invalid-coord 90.0,180.1 first-coord",
+            "not-closed-polygon 38.47,-94.22 38.47,-94.05 38.30,-94.05",
+            "91.0,181.0 -91.0,-181.0 0,0"
+          ],
+          "circle": [
+            "invalid-circle-no-radius",
+            "200.5,-300.7 -50",
+            "invalid,coordinates wrong-radius",
+            "39.0997,-94.5786"
+          ],
+          "geocode": [
+            {
+              "valueName": "",
+              "value": null
+            },
+            {
+              "wrongKey": "value",
+              "anotherWrongKey": "name"
+            },
+            "should-be-object-not-string"
+          ],
+          "altitude": "not-a-number",
+          "ceiling": 5000
+        },
+        {
+          "areaDesc": "Area with ceiling but no altitude - conditional error",
+          "polygon": [
+            "unclosed-polygon 23.5,90.0 24.5,90.0 24.5,91.0 23.5,91.0"
+          ],
+          "circle": [
+            "23.5,90.0 0"
+          ],
+          "altitude": 1000,
+          "ceiling": 500
+        },
+        {
+          "areaDesc": "Area with invalid coordinates everywhere",
+          "polygon": [
+            "95.0,185.0 -95.0,-185.0 100,200 -100,-200 95.0,185.0"
+          ],
+          "circle": [
+            "95.0,185.0 -100"
+          ]
+        }
+      ]
+    },
+    {
+      "language": "xx-YY-ZZ-AA-BB-CC",
+      "category": ["NonExistentCategory", "AnotherBadCategory", "WrongCat"],
+      "event": "Info block with missing required fields",
+      "responseType": ["BadResponse1", "BadResponse2"],
+      "eventCode": [
+        {
+          "valueName": "INVALID",
+          "value": ""
+        }
+      ],
+      "effective": "2025-01-01T10:00:00-00:00",
+      "onset": "2025-01-01T12:00:00-00:00",
+      "expires": "2025-01-01T08:00:00-00:00",
+      "web": "ftp://not-http-protocol",
+      "area": [
+        {
+          "areaDesc": "   ",
+          "polygon": [
+            "coordinates without enough points 23.5,90.0 24.5,90.0"
+          ]
+        }
+      ]
+    },
+    {
+      "category": ["Fire"],
+      "event": "Third info block missing all required urgency/severity/certainty fields",
+      "web": "http://",
+      "parameter": [
+        {
+          "valueName": "Test",
+          "value": 123
+        }
+      ],
+      "area": [
+        {
+          "areaDesc": "Area with no geographic data at all"
+        }
+      ]
+    }
+  ],
+  "extraUnknownField": "This field doesn't exist in CAP specification",
+  "anotherBadField": 12345,
+  "nullField": null,
+  "emptyStringField": ""
+}
