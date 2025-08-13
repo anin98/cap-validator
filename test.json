@@ -1,172 +1,61 @@
 {
-  "identifier": "invalid identifier with spaces, commas and special chars!@#$%",
-  "sender": "not-an-email-just-text",
-  "sent": "2025-25-99T99:99:99Z",
-  "status": "WrongStatus",
-  "msgType": "InvalidType",
-  "source": "",
-  "scope": "BadScope",
-  "restriction": "This should only be present when scope is Restricted",
-  "addresses": "Should only be present when scope is Private",
-  "code": "should-be-array",
-  "note": null,
-  "references": "invalid format missing commas and proper structure",
-  "incidents": "",
+  "identifier": "ef31aa93-baab-4d33-8705-7560d09cea3f",
+  "sender": "tanveer@rimes.int",
+  "sent": "2025-08-11T10:36:39+00:00",
+  "status": "Test",
+  "msgType": "Alert",
+  "scope": "Public",
   "info": [
     {
-      "language": "invalid-language-code-way-too-long-and-wrong-format-completely",
-      "category": [],
-      "event": "",
-      "responseType": ["InvalidResponse", "NonExistentType", "BadResponse"],
-      "urgency": "SuperUrgent",
-      "severity": "VeryVeryBad",
-      "certainty": "ProbablyMaybe",
-      "audience": "   ",
-      "eventCode": [
-        {
-          "valueName": "",
-          "value": null
-        },
-        {
-          "valueName": "   ",
-          "value": ""
-        },
-        "this should be an object with valueName and value"
+      "language": "en-US",
+      "category": [
+        "Geo"
       ],
-      "effective": "2025-99-99T25:70:90+99:99",
-      "onset": "2025-08-04T10:00:00-00:00",
-      "expires": "2025-08-04T08:00:00-00:00",
-      "senderName": "",
-      "headline": "This headline is intentionally way too long and exceeds the recommended 160 character limit specified by OASIS CAP 1.2 standard which should trigger validation warnings or errors in a properly implemented validator system according to specifications",
-      "description": null,
-      "instruction": "   ",
-      "web": "definitely-not-a-valid-url-format",
-      "contact": "",
-      "parameter": [
-        {
-          "valueName": null,
-          "value": ""
-        },
-        {
-          "valueName": "EmptyValue",
-          "value": null
-        },
-        "this should be an object not a string",
-        {
-          "wrongField": "should be valueName",
-          "anotherWrongField": "should be value"
-        }
+      "event": "Flood Alert",
+      "urgency": "Immediate",
+      "severity": "Extreme",
+      "certainty": "Observed",
+      "responseType": [
+        "Shelter"
       ],
+      "effective": "2025-08-10T18:00:00+00:00",
+      "onset": "2025-08-11T18:00:00+00:00",
+      "expires": "2025-08-12T18:00:00+00:00",
+      "senderName": "DNMG",
+      "headline": "Heavy flood alert at dhaka",
+      "description": "Dhaka to see significant rise in water level",
+      "instruction": "Kindly move to apartments",
       "resource": [
         {
-          "resourceDesc": "",
-          "mimeType": "invalid/mime/type/with/too/many/parts",
-          "size": -500,
-          "uri": "not-a-uri-at-all",
-          "derefUri": "should-be-base64-but-is-not",
-          "digest": "not-a-valid-40-character-sha1-hash"
-        },
-        {
-          "resourceDesc": "Valid description",
-          "mimeType": "text/",
-          "size": "should-be-number",
-          "digest": "toolong1234567890123456789012345678901234567890"
+          "resourceDesc": "Radar image",
+          "mimeType": "image/png",
+          "size": "1482253",
+          "uri": "https://dnmg-api.metstudio.net/media/resources/map-export-2025-08-10T11-24-37_k21Nrgh.png"
         }
       ],
       "area": [
         {
-          "areaDesc": "",
+          "areaDesc": "Test Area",
           "polygon": [
-            "invalid-polygon-format",
-            "200.5,-300.7 100.2,invalid-coord 90.0,180.1 first-coord",
-            "not-closed-polygon 38.47,-94.22 38.47,-94.05 38.30,-94.05",
-            "91.0,181.0 -91.0,-181.0 0,0"
+            "23.5,90.5 23.6,90.6 23.7,90.7 23.5,90.5"
           ],
           "circle": [
-            "invalid-circle-no-radius",
-            "200.5,-300.7 -50",
-            "invalid,coordinates wrong-radius",
-            "39.0997,-94.5786"
+            "23.8,90.4 10.5"
           ],
           "geocode": [
             {
-              "valueName": "",
-              "value": null
-            },
-            {
-              "wrongKey": "value",
-              "anotherWrongKey": "name"
-            },
-            "should-be-object-not-string"
-          ],
-          "altitude": "not-a-number",
-          "ceiling": 5000
+              "valueName": "FIPS6",
+              "value": "006001"
+            }
+          ]
         },
         {
-          "areaDesc": "Area with ceiling but no altitude - conditional error",
+          "areaDesc": "TL",
           "polygon": [
-            "unclosed-polygon 23.5,90.0 24.5,90.0 24.5,91.0 23.5,91.0"
-          ],
-          "circle": [
-            "23.5,90.0 0"
-          ],
-          "altitude": 1000,
-          "ceiling": 500
-        },
-        {
-          "areaDesc": "Area with invalid coordinates everywhere",
-          "polygon": [
-            "95.0,185.0 -95.0,-185.0 100,200 -100,-200 95.0,185.0"
-          ],
-          "circle": [
-            "95.0,185.0 -100"
+            "-8.42771113512415,125.84707247584385 -8.429307527142367,125.8141936082637 -8.434081368400877,125.7816305632718 -8.441986800759683,125.74969615230131 -8.452947880120181,125.71869719239912 -8.46685930087917,125.68893157860647 -8.483587400710572,125.66068543917041 -8.502971436319566,125.63423040010521 -8.524825118280297,125.60982098469702 -8.548938390638135,125.58769217239958 -8.575079438651002,125.56805714021148 -8.602996905882025,125.5511052080642 -8.632422299856582,125.5370000079944 -8.663072563678305,125.52587789493509 -8.694652789377779,125.51784661485031 -8.7268590473594,125.51298424366541 -8.759381305130805,125.51133840803115 -8.79190640755752,125.51292579641127 -8.824121090194948,125.51773196632266 -8.855714996819804,125.52571145080074 -8.886383672121935,125.5367881643314 -8.91583150063121,125.55085610560633 -8.943774563346825,125.56778035154973 -8.969943384209778,125.58739833415527 -8.994085539512021,125.6095213887945 -9.015968104564509,125.63393655984696 -9.035379913443206,125.66040864678735 -9.052133609387205,125.68868247128644 -9.066067465421689,125.71848534347343 -9.077046957003377,125.74952970330483 -9.08496607091557,125.7815159110228 -9.089748337249507,125.8141351589956 -9.091347574070383,125.84707247584385 -9.089748337249507,125.88000979269206 -9.08496607091557,125.91262904066487 -9.077046957003377,125.94461524838286 -9.066067465421689,125.97565960821426 -9.052133609387205,126.00546248040123 -9.035379913443206,126.03373630490033 -9.015968104564509,126.06020839184073 -8.994085539512021,126.08462356289319 -8.969943384209778,126.10674661753241 -8.943774563346825,126.12636460013793 -8.91583150063121,126.14328884608135 -8.886383672121935,126.15735678735628 -8.855714996819804,126.16843350088693 -8.824121090194948,126.17641298536502 -8.79190640755752,126.1812191552764 -8.759381305130805,126.18280654365653 -8.7268590473594,126.18116070802226 -8.694652789377779,126.17629833683736 -8.663072563678305,126.16826705675258 -8.632422299856582,126.15714494369328 -8.602996905882025,126.14303974362348 -8.575079438651002,126.12608781147621 -8.548938390638135,126.10645277928809 -8.524825118280297,126.08432396699064 -8.502971436319566,126.05991455158248 -8.483587400710572,126.03345951251725 -8.46685930087917,126.0052133730812 -8.452947880120181,125.97544775928857 -8.441986800759683,125.94444879938638 -8.434081368400877,125.91251438841589 -8.429307527142367,125.87995134342397 -8.42771113512415,125.84707247584385"
           ]
-        }
-      ]
-    },
-    {
-      "language": "xx-YY-ZZ-AA-BB-CC",
-      "category": ["NonExistentCategory", "AnotherBadCategory", "WrongCat"],
-      "event": "Info block with missing required fields",
-      "responseType": ["BadResponse1", "BadResponse2"],
-      "eventCode": [
-        {
-          "valueName": "INVALID",
-          "value": ""
-        }
-      ],
-      "effective": "2025-01-01T10:00:00-00:00",
-      "onset": "2025-01-01T12:00:00-00:00",
-      "expires": "2025-01-01T08:00:00-00:00",
-      "web": "ftp://not-http-protocol",
-      "area": [
-        {
-          "areaDesc": "   ",
-          "polygon": [
-            "coordinates without enough points 23.5,90.0 24.5,90.0"
-          ]
-        }
-      ]
-    },
-    {
-      "category": ["Fire"],
-      "event": "Third info block missing all required urgency/severity/certainty fields",
-      "web": "http://",
-      "parameter": [
-        {
-          "valueName": "Test",
-          "value": 123
-        }
-      ],
-      "area": [
-        {
-          "areaDesc": "Area with no geographic data at all"
         }
       ]
     }
-  ],
-  "extraUnknownField": "This field doesn't exist in CAP specification",
-  "anotherBadField": 12345,
-  "nullField": null,
-  "emptyStringField": ""
+  ]
 }

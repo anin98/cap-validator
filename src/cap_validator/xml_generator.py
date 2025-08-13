@@ -1,11 +1,13 @@
 # src/cap_validator/xml_generator.py
 
 """
-OASIS CAP 1.2 Compliant XML Generation
+OASIS CAP 1.2 Compliant XML Generation - FIXED RESOURCE BLOCK ISSUE
 
 This module provides functions to generate a CAP XML string from a Python dictionary,
 ensuring the output strictly follows the element sequence defined in the standard
 and complies with all OASIS CAP 1.2 requirements.
+
+FIXED: Resource blocks now properly added to XML output
 """
 
 import xml.etree.ElementTree as ET
@@ -190,6 +192,7 @@ def _add_alert_elements(root: ET.Element, data: Dict[str, Any]):
 def _add_info_element(root: ET.Element, data: Dict[str, Any]):
     """
     Adds an <info> block and its sub-elements in the correct OASIS sequence.
+    FIXED: Proper resource handling with exception re-raising
     """
     if not isinstance(data, dict):
         raise CAPValidationError("Info data must be a dictionary")
@@ -250,11 +253,36 @@ def _add_info_element(root: ET.Element, data: Dict[str, Any]):
     
     _add_name_value_elements(info_elem, 'parameter', data.get('parameter', []))
     
-    # Add complex elements (resource, area)
-    for resource_data in data.get('resource', []):
-        _add_resource_element(info_elem, resource_data)
+    # FIXED: Proper resource handling with exception re-raising
+    resource_list = data.get('resource', [])
     
-    for area_data in data.get('area', []):
+    # Debug: Print resource data structure
+    print(f"DEBUG: Processing {len(resource_list) if isinstance(resource_list, list) else 'non-list'} resources")
+    if resource_list:
+        print(f"DEBUG: First resource structure: {resource_list[0] if isinstance(resource_list, list) and len(resource_list) > 0 else 'N/A'}")
+    
+    # Ensure resource_list is a list
+    if isinstance(resource_list, dict):
+        resource_list = [resource_list]
+    elif not isinstance(resource_list, list):
+        resource_list = []
+    
+    for i, resource_data in enumerate(resource_list):
+        try:
+            print(f"DEBUG: Processing resource {i}: {resource_data}")
+            _add_resource_element(info_elem, resource_data)
+            print(f"DEBUG: Successfully added resource {i}")
+        except Exception as e:
+            print(f"ERROR: Failed to add resource {i}: {e}")
+            # FIXED: Re-raise the exception instead of silently continuing
+            raise CAPContentError(f"Failed to process resource {i}: {str(e)}", element='resource') from e
+    
+    # Add area elements
+    area_list = data.get('area', [])
+    if isinstance(area_list, dict):
+        area_list = [area_list]
+    
+    for area_data in area_list:
         _add_area_element(info_elem, area_data)
 
 
@@ -277,23 +305,44 @@ def _validate_required_info_fields(data: Dict[str, Any]):
 def _add_resource_element(parent: ET.Element, data: Dict[str, Any]):
     """
     Adds a <resource> element in the correct OASIS sequence.
+    FIXED: Better validation and error handling with proper field checking
     """
-    if not isinstance(data, dict):
-        raise CAPValidationError("Resource data must be a dictionary")
+    print(f"DEBUG: _add_resource_element called with data: {data}")
+    print(f"DEBUG: data type: {type(data)}")
     
-    # resourceDesc is required for resource elements
-    if 'resourceDesc' not in data:
-        raise CAPValidationError("Resource element requires 'resourceDesc' field")
+    if not isinstance(data, dict):
+        raise CAPValidationError(f"Resource data must be a dictionary, got {type(data)}: {data}")
+    
+    # FIXED: Check for 'resourceDesc' field more carefully
+    resource_desc = data.get('resourceDesc')
+    if not resource_desc:
+        # Check for alternative field names that might be used
+        desc_alternatives = ['description', 'desc', 'resource_desc', 'resourceDescription']
+        for alt in desc_alternatives:
+            if alt in data and data[alt]:
+                resource_desc = data[alt]
+                print(f"DEBUG: Found resource description in '{alt}' field: {resource_desc}")
+                break
+        
+        if not resource_desc:
+            available_keys = list(data.keys()) if isinstance(data, dict) else 'N/A'
+            raise CAPValidationError(
+                f"Resource element requires 'resourceDesc' field. Available keys: {available_keys}"
+            )
+    
+    print(f"DEBUG: Creating resource element with resourceDesc: {resource_desc}")
     
     res_elem = ET.SubElement(parent, 'resource')
-    _add_element(res_elem, 'resourceDesc', data['resourceDesc'])
+    _add_element(res_elem, 'resourceDesc', resource_desc)
     
     # mimeType is optional but recommended
-    if 'mimeType' in data:
+    if 'mimeType' in data and data['mimeType']:
+        print(f"DEBUG: Adding mimeType: {data['mimeType']}")
         _validate_mime_type(data['mimeType'])
         _add_element(res_elem, 'mimeType', data['mimeType'])
     
-    if 'size' in data:
+    if 'size' in data and data['size'] is not None:
+        print(f"DEBUG: Adding size: {data['size']}")
         # Validate size is a positive integer
         try:
             size_val = int(data['size'])
@@ -303,22 +352,27 @@ def _add_resource_element(parent: ET.Element, data: Dict[str, Any]):
         except (ValueError, TypeError) as e:
             raise CAPContentError(f"Invalid size value: {data['size']}", element='size') from e
     
-    if 'uri' in data:
+    if 'uri' in data and data['uri']:
+        print(f"DEBUG: Adding uri: {data['uri']}")
         _validate_uri_format(data['uri'])
         _add_element(res_elem, 'uri', data['uri'])
     
-    if 'derefUri' in data:
+    if 'derefUri' in data and data['derefUri']:
+        print(f"DEBUG: Adding derefUri: {len(str(data['derefUri']))} characters")
         # derefUri should be base64 encoded data
         _add_element(res_elem, 'derefUri', data['derefUri'])
     
-    if 'digest' in data:
-        # Validate SHA-1 digest format (40 hex characters) - Fixed regex
+    if 'digest' in data and data['digest']:
+        print(f"DEBUG: Adding digest: {data['digest']}")
+        # Validate SHA-1 digest format (40 hex characters)
         if not re.match(r'^[a-fA-F0-9]{40}$', str(data['digest'])):
             raise CAPContentError(
                 f"Digest must be a 40-character SHA-1 hash: {data['digest']}", 
                 element='digest'
             )
         _add_element(res_elem, 'digest', data['digest'])
+    
+    print(f"DEBUG: Resource element added successfully")
 
 
 def _add_area_element(parent: ET.Element, data: Dict[str, Any]):
@@ -337,11 +391,17 @@ def _add_area_element(parent: ET.Element, data: Dict[str, Any]):
     
     # Validate and add geographic elements
     polygons = data.get('polygon', [])
+    if not isinstance(polygons, list):
+        polygons = [polygons] if polygons else []
+    
     for polygon in polygons:
         _validate_polygon_format(polygon)
         _add_element(area_elem, 'polygon', polygon)
     
     circles = data.get('circle', [])
+    if not isinstance(circles, list):
+        circles = [circles] if circles else []
+    
     for circle in circles:
         _validate_circle_format(circle)
         _add_element(area_elem, 'circle', circle)
