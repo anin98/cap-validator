@@ -162,16 +162,18 @@ def validate_cap_dict(alert_data: Dict[str, Any], strict: bool = True) -> Alert:
         raise CAPValidationError(f"Dictionary validation failed: {e}") from e
 
 
-def validate_cap_file(file_path: Union[str, Path]) -> Alert:
+def validate_cap_file(file_path: Union[str, Path], strict: bool = True, validate_xsd: bool = True) -> Alert:
     """
     Validates a CAP XML file by reading its content and using validate_cap_xml.
-    
+
     Args:
         file_path: Path to the CAP XML file
-        
+        strict: If True, enforces strict OASIS CAP 1.2 validation
+        validate_xsd: If True, validates against official OASIS XSD schema
+
     Returns:
         Validated Alert model instance
-        
+
     Raises:
         FileNotFoundError: If file doesn't exist
         CAPValidationError: If validation fails
@@ -179,10 +181,10 @@ def validate_cap_file(file_path: Union[str, Path]) -> Alert:
     path = Path(file_path)
     if not path.is_file():
         raise FileNotFoundError(f"CAP file not found at: {path}")
-    
+
     try:
         xml_content = path.read_text(encoding='utf-8')
-        return validate_cap_xml(xml_content)
+        return validate_cap_xml(xml_content, strict=strict, validate_xsd=validate_xsd)
     except Exception as e:
         if isinstance(e, (CAPValidationError, CAPStructureError, FileNotFoundError)):
             raise

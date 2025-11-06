@@ -515,24 +515,32 @@ def _format_datetime(dt_input: Union[datetime, str, None]) -> Optional[str]:
 def _sanitize_text_content(text: str) -> str:
     """
     Sanitizes text content according to OASIS CAP 1.2 requirements.
-    
+
     - Normalizes whitespace
     - Validates character encoding
-    - Removes prohibited character entities
+    - Escapes XML special characters properly
+
+    Note: Python's ElementTree automatically escapes special characters when
+    creating elements, but we ensure the input text is clean and valid UTF-8.
     """
     if not isinstance(text, str):
         text = str(text)
-    
+
     # Normalize whitespace (collapse multiple spaces, trim)
     text = ' '.join(text.split())
-    
-    # Check for prohibited character entities (OASIS discourages HTML entities)
-    if re.search(r'&[a-zA-Z][a-zA-Z0-9]*;', text):
+
+    # Check for pre-escaped HTML entities that shouldn't be in the input
+    # (ElementTree will handle the escaping automatically)
+    # We only reject already-escaped entities to avoid double-escaping
+    if re.search(r'&(?:amp|lt|gt|quot|apos);', text):
+        # These are already escaped - this might indicate the user is trying
+        # to pass pre-escaped XML, which ElementTree will double-escape
         raise CAPEncodingError(
-            "HTML character entities are discouraged in CAP content",
+            "Do not manually escape XML entities (&amp;, &lt;, &gt;, &quot;, &apos;). "
+            "Use plain text characters (&, <, >, \", ') instead - they will be escaped automatically.",
             problematic_content=text
         )
-    
+
     # Validate UTF-8 compatibility
     try:
         text.encode('utf-8')
@@ -541,7 +549,11 @@ def _sanitize_text_content(text: str) -> str:
             f"Text content contains invalid UTF-8 characters: {e}",
             problematic_content=text
         ) from e
-    
+
+    # Note: We do NOT manually escape &, <, >, ", ' here because
+    # ElementTree's ET.SubElement() and elem.text = ... automatically
+    # handle XML escaping correctly. Manual escaping would cause double-escaping.
+
     return text
 
 
