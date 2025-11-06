@@ -1,3 +1,0 @@
-[console_scripts]
-cap-validate = pycap_validator.cli:main
-pycap-validate = pycap_validator.cli:main

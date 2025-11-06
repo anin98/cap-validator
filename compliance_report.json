@@ -1,7 +1,7 @@
 {
   "compliant": true,
   "oasis_version": "1.2",
-  "validation_timestamp": "2025-08-13T05:34:00-00:00",
+  "validation_timestamp": "2025-08-20T07:12:42-00:00",
   "errors": [],
   "warnings": [],
   "checks": {
@@ -13,10 +13,10 @@
     "namespace_validation": true
   },
   "alert_info": {
-    "identifier": "ef31aa93-baab-4d33-8705-7560d09cea3f",
+    "identifier": "e5d4f922-589b-41e5-8ecb-1012742b9537",
     "sender": "tanveer@rimes.int",
-    "sent": "2025-08-11T10:36:39-00:00",
-    "status": "Test",
+    "sent": "2025-08-20T05:03:53-00:00",
+    "status": "Actual",
     "msgType": "Alert",
     "scope": "Public"
   }
