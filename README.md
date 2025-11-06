@@ -17,9 +17,23 @@ A comprehensive guide to using the CAP Validator library for validating and gene
 
 ## Installation
 
+### Install from GitHub (Recommended)
+
+```bash
+# Latest version
+pip install git+https://github.com/anin98/cap-validator.git
+
+# Specific version (e.g., v1.1.0)
+pip install git+https://github.com/anin98/cap-validator.git@v1.1.0
+```
+
+### Install from PyPI (Coming Soon)
+
 ```bash
 pip install pycap-validator
 ```
+
+For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
 ## Quick Start
 
