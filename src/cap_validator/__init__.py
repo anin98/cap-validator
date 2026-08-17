@@ -184,30 +184,26 @@ def create_basic_alert(
 ) -> Alert:
     """
     Create a basic CAP alert with minimum required fields.
-    
+
     Args:
         identifier: Unique alert identifier
-        sender: Alert sender identifier (email format recommended)
+        sender: Alert sender identifier (email format not required)
         event: Description of the event
         urgency: Alert urgency level
         severity: Alert severity level
         certainty: Alert certainty level
         area_desc: Description of affected area
-        validate_strict: If True, performs strict validation
+        validate_strict: If True, performs strict validation of the resulting alert
         **kwargs: Additional alert fields
-        
+
     Returns:
         Alert model instance
-        
+
     Raises:
         CAPValidationError: If validation fails
     """
     from datetime import datetime, timezone
-    
-    # Validate sender format if strict validation is enabled
-    if validate_strict and not validate_email_format(sender):
-        raise CAPValidationError(f"Sender should be in email format for interoperability: {sender}")
-    
+
     alert_data = {
         'identifier': sanitize_identifier(identifier),
         'sender': sender,

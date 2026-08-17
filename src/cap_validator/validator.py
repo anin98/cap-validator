@@ -32,10 +32,9 @@ from .exceptions import (
 )
 from .models import Alert
 from .utils import (
-    normalize_whitespace, 
+    normalize_whitespace,
     validate_cap_datetime_format,
     validate_content_constraints,
-    validate_email_format,
     validate_uri_format
 )
 
@@ -407,13 +406,9 @@ def _validate_alert_structure(alert_data: Dict[str, Any]):
     if not sender or not sender.strip():
         raise CAPValidationError("Alert sender cannot be empty")
     
-    # Check if sender is in email format (OASIS recommendation)
+    # Email format for sender is an OASIS recommendation, not a hard requirement
     sender = sender.strip()
-    if not validate_email_format(sender):
-        raise CAPValidationError(
-            f"Alert sender should be in email format for OASIS compliance: '{sender}'"
-        )
-    
+
     # Validate sent datetime format
     sent = alert_data.get('sent')
     if sent:
